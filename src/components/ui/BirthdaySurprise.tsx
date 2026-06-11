@@ -24,6 +24,11 @@ export function BirthdaySurprise() {
     if (isBirthday && !sessionStorage.getItem("birthdaySurpriseShown")) {
       sessionStorage.setItem("birthdaySurpriseShown", "true");
 
+      // Reproducir música (asegúrate de tener el archivo en la carpeta public)
+      const audio = new Audio('/cumpleanos.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(e => console.log("Navegador bloqueó el autoplay", e));
+
       const duration = 5 * 1000;
       const end = Date.now() + duration;
 
