@@ -14,6 +14,8 @@ interface Evolution {
   };
 }
 
+import { confirmDeleteAlert, successAlert } from "@/lib/alerts";
+
 export function EvolutionList({ patientId, evolutions, userId, inventoryItems = [] }: { patientId: string, evolutions: Evolution[], userId: string, inventoryItems?: any[] }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -38,6 +40,8 @@ export function EvolutionList({ patientId, evolutions, userId, inventoryItems = 
     
     setLoading(false);
     setIsFormOpen(false);
+    setSelectedMaterials([]);
+    successAlert("Atención guardada con éxito");
   };
 
   const handleSubmitEdit = async (e: React.FormEvent<HTMLFormElement>, evolutionId: string) => {
@@ -50,11 +54,14 @@ export function EvolutionList({ patientId, evolutions, userId, inventoryItems = 
     
     setLoading(false);
     setEditingId(null);
+    successAlert("Atención actualizada");
   };
 
   const handleDelete = async (evolutionId: string) => {
-    if (confirm("¿Estás seguro de eliminar esta atención?")) {
+    const result = await confirmDeleteAlert("¿Estás seguro de eliminar esta atención? Se repondrá el stock de los materiales usados.");
+    if (result.isConfirmed) {
       await softDeleteEvolution(evolutionId, patientId);
+      successAlert("Atención eliminada");
     }
   };
 

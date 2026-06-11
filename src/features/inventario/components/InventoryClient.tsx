@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, AlertTriangle, PackagePlus, Edit2, Trash2, X, Save } from "lucide-react";
+import { Plus, Search, AlertTriangle, PackagePlus, Edit2, Trash2, X, Save, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { confirmDeleteAlert, successAlert } from "@/lib/alerts";
 import { createInventoryItem, adjustStock, updateInventoryItem, softDeleteInventoryItem } from "../actions";
 
 export function InventoryClient({ initialItems }: { initialItems: any[] }) {
@@ -66,16 +68,32 @@ export function InventoryClient({ initialItems }: { initialItems: any[] }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar este ítem del inventario?")) {
+    const result = await confirmDeleteAlert("¿Estás seguro de eliminar este ítem del inventario?");
+    if (result.isConfirmed) {
       const res = await softDeleteInventoryItem(id);
       if (res.success) {
         setItems(items.filter(i => i.id !== id));
+        successAlert("Ítem eliminado");
       }
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Encabezado */}
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/dashboard" 
+          className="p-2 rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-gold"
+          title="Regresar al Inicio"
+        >
+          <ArrowLeft size={24} />
+        </Link>
+        <div>
+          <h1 className="text-3xl font-black text-gold mb-2">Control de Inventario</h1>
+          <p className="text-muted-foreground">Gestiona medicamentos, insumos, herramientas y alertas de bajo stock.</p>
+        </div>
+      </div>
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-secondary/30 p-4 rounded-xl border border-border">
         <div className="flex gap-2 w-full md:w-auto">
           <select 
