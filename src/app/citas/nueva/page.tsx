@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Clock, User, AlignLeft, ArrowLeft } from "lucide-react";
 
+import { PatientSearch } from "@/features/citas/components/PatientSearch";
+
 export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth";
@@ -60,12 +62,7 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
         
         <div className="space-y-2">
           <label className="text-sm font-semibold flex items-center gap-2"><User size={16} className="text-gold"/> Paciente</label>
-          <select name="patientId" required className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold">
-            <option value="">Seleccione un paciente...</option>
-            {patients.map(p => (
-              <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
-            ))}
-          </select>
+          <PatientSearch patients={patients} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
