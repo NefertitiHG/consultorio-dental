@@ -20,21 +20,21 @@ export default async function PrintBudgetPage({ params }: { params: Promise<{ id
   return (
     <div className="min-h-screen bg-secondary/30 p-4 md:p-8 font-sans">
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
-        <Link 
-          href={`/pacientes/${resolvedParams.id}`} 
+        <Link
+          href={`/pacientes/${resolvedParams.id}`}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground bg-background px-4 py-2 rounded-md shadow-sm"
         >
           <ChevronLeft size={20} /> Volver al Paciente
         </Link>
-        <DownloadPDFButton 
-          targetId="budget-pdf-content" 
-          filename={`Presupuesto_${patient.firstName}_${patient.lastName}`} 
+        <DownloadPDFButton
+          targetId="budget-pdf-content"
+          filename={`Presupuesto_${patient.firstName}_${patient.lastName}`}
         />
       </div>
 
       {/* A4 Container */}
-      <div 
-        id="budget-pdf-content" 
+      <div
+        id="budget-pdf-content"
         className="w-full max-w-[210mm] min-h-[297mm] mx-auto bg-white text-black p-[20mm] shadow-2xl relative"
       >
         {/* Header */}
@@ -43,8 +43,8 @@ export default async function PrintBudgetPage({ params }: { params: Promise<{ id
             <div className="w-48 h-16 bg-gray-100 flex items-center justify-center border border-gray-300 text-gray-500 font-bold mb-2">
               [ LOGO DE LA CLÍNICA ]
             </div>
-            <p className="text-sm text-gray-600">Av. Ejemplo 123, Ciudad</p>
-            <p className="text-sm text-gray-600">Tel: (01) 234-5678</p>
+            <p className="text-sm text-gray-600">Av. José Martí 1052, La Esperanza</p>
+            <p className="text-sm text-gray-600">Tel: 982909429</p>
           </div>
           <div className="text-right">
             <h1 className="text-3xl font-black text-gray-800 tracking-tight">PRESUPUESTO</h1>

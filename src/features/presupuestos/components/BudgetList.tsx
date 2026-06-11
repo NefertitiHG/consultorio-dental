@@ -12,6 +12,7 @@ interface Budget {
   status: string;
   createdAt: Date;
   items: any[];
+  payments?: any[];
 }
 
 export function BudgetList({ patientId, budgets }: { patientId: string, budgets: Budget[] }) {
