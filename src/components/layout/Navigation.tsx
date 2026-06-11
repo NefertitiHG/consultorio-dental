@@ -8,12 +8,16 @@ import { useEffect, useState } from "react";
 
 export function Navigation() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  if (status === "unauthenticated" || !session) {
+    return null;
+  }
 
   const isSuperAdminOrAdmin = isMounted && ((session?.user as any)?.role === "SUPERADMIN" || (session?.user as any)?.role === "ADMIN");
 
@@ -91,13 +95,13 @@ export function Navigation() {
 
         {/* Bottom Navigation para Mobile */}
         <nav className="md:hidden fixed bottom-0 left-0 w-full bg-secondary border-t border-border z-50 pb-safe">
-          <ul className="flex justify-around items-center h-16">
+          <ul className="flex overflow-x-auto custom-scrollbar items-center h-16 px-2 gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
 
               return (
-                <li key={item.href} className="flex-1">
+                <li key={item.href} className="flex-shrink-0 min-w-[72px]">
                   <Link
                     href={item.href}
                     className="flex flex-col items-center justify-center h-full w-full gap-1 pt-1"
@@ -113,7 +117,7 @@ export function Navigation() {
                 </li>
               );
             })}
-            <li className="flex-1">
+            <li className="flex-shrink-0 min-w-[72px]">
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="flex flex-col items-center justify-center h-full w-full gap-1 pt-1"
