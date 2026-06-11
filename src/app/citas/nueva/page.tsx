@@ -2,13 +2,25 @@ import { prisma } from "@/lib/prisma";
 import { createAppointment } from "@/features/citas/actions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Calendar, Clock, User, AlignLeft } from "lucide-react";
+import { Calendar, Clock, User, AlignLeft, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 export default async function NuevaCitaPage({ searchParams }: { searchParams: Promise<{ date?: string, time?: string }> }) {
+  const session = await getServerSession(authOptions);
+
   const patients = await prisma.patient.findMany({
+    where: { isActive: true },
     orderBy: { firstName: "asc" }
+  });
+
+  // Solo doctores, superadmins o admins que atiendan (opcional)
+  const doctors = await prisma.user.findMany({
+    where: { role: { in: ["DOCTOR", "SUPERADMIN"] } },
+    orderBy: { name: "asc" }
   });
 
   const params = await searchParams;
@@ -21,18 +33,27 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     const dateStr = formData.get("date") as string;
     const timeStr = formData.get("time") as string;
     const notes = formData.get("notes") as string;
+    
+    // Obtener el doctor seleccionado, o si no hay (por error), usar el logueado
+    const selectedDoctorId = formData.get("doctorId") as string;
+    const userId = selectedDoctorId || session?.user?.id || "";
 
     const date = new Date(`${dateStr}T${timeStr}:00`);
 
-    await createAppointment({ patientId, date, notes });
+    await createAppointment({ patientId, date, notes, userId });
     redirect("/citas");
   }
 
   return (
-    <div className="p-4 md:p-6 w-full max-w-3xl mx-auto">
-      <div className="mb-8">
-        <Link href="/citas" className="text-gold hover:underline text-sm mb-2 inline-block">&larr; Volver a la Agenda</Link>
-        <h1 className="text-3xl font-bold text-foreground">Agendar Cita</h1>
+    <div className="p-4 md:p-8 w-full max-w-2xl mx-auto">
+      <div className="flex items-center gap-4 mb-8">
+        <Link href="/citas" className="p-2 bg-secondary text-muted-foreground hover:text-gold hover:bg-gold/10 rounded-lg transition-colors">
+          <ArrowLeft size={20} />
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Agendar Cita</h1>
+          <p className="text-muted-foreground mt-1">Ingresa los detalles para programar una nueva cita.</p>
+        </div>
       </div>
 
       <form action={handleCreate} className="bg-background border border-border p-6 rounded-xl shadow-lg space-y-6">
@@ -43,6 +64,16 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
             <option value="">Seleccione un paciente...</option>
             {patients.map(p => (
               <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold flex items-center gap-2"><User size={16} className="text-gold"/> Doctor / Especialista</label>
+          <select name="doctorId" required defaultValue={session?.user?.id || ""} className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold">
+            <option value="">Asignar a un especialista...</option>
+            {doctors.map(d => (
+              <option key={d.id} value={d.id}>Dr. {d.name} ({d.email})</option>
             ))}
           </select>
         </div>

@@ -1,20 +1,35 @@
-import { getPatientById } from "@/features/pacientes/actions";
+import { getPatientById, getEvolutions } from "@/features/pacientes/actions";
+import { getBudgetsByPatient } from "@/features/presupuestos/actions";
 import { getLatestOdontogram, saveOdontogram } from "@/features/odontograma/actions";
 import { ArrowLeft, Edit, Phone, Mail } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Odontogram } from "@/features/odontograma/components/Odontogram";
+import { EvolutionList } from "@/features/pacientes/components/EvolutionList";
+import { BudgetList } from "@/features/presupuestos/components/BudgetList";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+import { PatientActions } from "@/features/pacientes/components/PatientActions";
 
 export default async function PatientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const result = await getPatientById(resolvedParams.id);
-  const odontogramResult = await getLatestOdontogram(resolvedParams.id);
+  const session = await getServerSession(authOptions);
+  
+  const [result, odontogramResult, evolutionsResult, budgetsResult] = await Promise.all([
+    getPatientById(resolvedParams.id),
+    getLatestOdontogram(resolvedParams.id),
+    getEvolutions(resolvedParams.id),
+    getBudgetsByPatient(resolvedParams.id)
+  ]);
   
   if (!result.success || !result.data) {
     notFound();
   }
 
   const patient = result.data;
+  const evolutions = evolutionsResult.success && evolutionsResult.data ? (evolutionsResult.data as any) : [];
+  const budgets = budgetsResult.success && budgetsResult.data ? (budgetsResult.data as any) : [];
   const initialOdontogramData = odontogramResult.success && odontogramResult.data ? (odontogramResult.data.data as any) : undefined;
 
   // Server Action wrapper para pasar al cliente
@@ -46,42 +61,44 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
           </div>
         </div>
         
-        <button className="flex items-center gap-2 border border-border bg-secondary hover:border-gold px-4 py-2 rounded-md transition-colors">
-          <Edit size={18} />
-          Editar
-        </button>
+        <PatientActions patientId={patient.id} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Columna Izquierda: Datos y Contacto */}
+        {/* Columna Izquierda: Detalles del Paciente y Presupuestos */}
         <div className="space-y-6">
-          <div className="bg-secondary border border-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gold border-b border-border pb-2">Información de Contacto</h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-foreground">
-                <Phone size={18} className="text-muted-foreground" />
+          <div className="bg-secondary/20 rounded-xl p-6 border border-border">
+            <h2 className="text-xl font-bold text-foreground mb-4">Información de Contacto</h2>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Phone size={18} className="text-gold" />
                 <span>{patient.phone || "No registrado"}</span>
               </div>
-              <div className="flex items-center gap-3 text-foreground">
-                <Mail size={18} className="text-muted-foreground" />
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Mail size={18} className="text-gold" />
                 <span>{patient.email || "No registrado"}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-secondary border border-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gold border-b border-border pb-2">Antecedentes Médicos</h2>
+          <div className="bg-secondary/20 rounded-xl p-6 border border-border">
+            <h2 className="text-xl font-bold text-gold mb-4">Antecedentes Médicos</h2>
             <div className="space-y-4">
               <div>
-                <span className="block text-sm text-muted-foreground mb-1">Alergias</span>
-                <p className="text-foreground">{patient.allergies || "Ninguna registrada"}</p>
+                <span className="text-sm text-muted-foreground block mb-1">Alergias</span>
+                <p className="text-foreground">{patient.allergies || "Ninguna"}</p>
               </div>
               <div>
-                <span className="block text-sm text-muted-foreground mb-1">Enfermedades / Notas médicas</span>
-                <p className="text-foreground">{patient.medicalHistory || "Sin historial médico previo"}</p>
+                <span className="text-sm text-muted-foreground block mb-1">Enfermedades / Notas médicas</span>
+                <p className="text-foreground">{patient.medicalHistory || "Ninguno"}</p>
               </div>
             </div>
           </div>
+          
+          <BudgetList 
+            patientId={patient.id}
+            budgets={budgets}
+          />
         </div>
 
         {/* Columna Derecha: Historial y Odontograma */}
@@ -93,6 +110,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
               onSave={handleSaveOdontogram} 
             />
           </div>
+
+          <EvolutionList 
+            patientId={patient.id} 
+            evolutions={evolutions} 
+            userId={session?.user?.id || ""}
+          />
         </div>
       </div>
     </div>

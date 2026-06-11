@@ -18,7 +18,7 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
   const prevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
 
   return (
-    <div className="bg-background border border-border rounded-xl shadow-lg overflow-hidden flex flex-col h-[800px]">
+    <div className="bg-background border border-border rounded-xl shadow-lg overflow-hidden flex flex-col">
       
       {/* Header */}
       <div className="p-4 border-b border-border bg-secondary flex justify-between items-center">
@@ -40,7 +40,7 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
       </div>
 
       {/* Grid del Calendario */}
-      <div className="flex-1 overflow-auto custom-scrollbar flex">
+      <div className="flex-1 overflow-x-auto custom-scrollbar flex">
         
         {/* Columna de Horas */}
         <div className="w-16 md:w-20 border-r border-border bg-secondary/30 flex-shrink-0">
@@ -95,8 +95,9 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
                       const height = 80;
 
                       return (
-                        <div 
+                        <Link 
                           key={app.id}
+                          href={`/citas/${app.id}/editar`}
                           className="absolute left-1 right-1 bg-gold/10 border border-gold rounded p-2 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer z-20 group"
                           style={{ top: `${top}px`, height: `${height}px` }}
                         >
@@ -107,7 +108,7 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
                             {app.patient.firstName} {app.patient.lastName}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">{app.notes || "Sin notas"}</p>
-                        </div>
+                        </Link>
                       );
                     })}
                 </div>

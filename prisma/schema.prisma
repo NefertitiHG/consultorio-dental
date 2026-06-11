@@ -56,6 +56,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   appointments  Appointment[]
+  evolutions    ClinicalEvolution[]
 
   @@map("users")
 }
@@ -70,6 +71,7 @@ model VerificationToken {
 }
 
 enum Role {
+  SUPERADMIN
   ADMIN
   DOCTOR
   ASSISTANT
@@ -78,6 +80,23 @@ enum Role {
 // ==========================================
 // ERP Models
 // ==========================================
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patients    Patient[]
+  appointments Appointment[]
+  budgets     Budget[]
+  payments    Payment[]
+
+  @@map("branches")
+}
 
 model Patient {
   id              String        @id @default(cuid())
@@ -89,13 +108,18 @@ model Patient {
   birthDate       DateTime?
   allergies       String?       @db.Text
   medicalHistory  String?       @db.Text
+  isActive        Boolean       @default(true) // Soft Delete
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  branchId        String?
+  branch          Branch?       @relation(fields: [branchId], references: [id])
 
   appointments    Appointment[]
   odontograms     Odontogram[]
   transactions    Transaction[]
   budgets         Budget[]
+  evolutions      ClinicalEvolution[]
 
   @@map("patients")
 }
@@ -107,12 +131,16 @@ model Appointment {
   status        AppointmentStatus @default(SCHEDULED)
   googleEventId String?
   notes         String?  @db.Text
+  isActive      Boolean  @default(true) // Soft Delete
   
   patientId     String
   patient       Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
   
   userId        String
   doctor        User     @relation(fields: [userId], references: [id])
+
+  branchId      String?
+  branch        Branch?  @relation(fields: [branchId], references: [id])
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -138,16 +166,39 @@ model Odontogram {
 }
 
 // ----------------------
+// HISTORIA CLÍNICA (EVOLUCIONES)
+// ----------------------
+
+model ClinicalEvolution {
+  id          String   @id @default(cuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  userId      String
+  doctor      User     @relation(fields: [userId], references: [id])
+  
+  date        DateTime @default(now())
+  treatment   String   // Nombre general del tratamiento realizado
+  notes       String   @db.Text
+  attachments Json?    // URLs de radiografías, fotos, etc.
+  isActive    Boolean  @default(true) // Soft Delete
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("clinical_evolutions")
+}
+
+// ----------------------
 // MÓDULO DE PRESUPUESTOS Y FINANZAS
 // ----------------------
 
 model Treatment {
   id           String   @id @default(cuid())
   name         String
-  category     String   // Ej. "Operativa", "Ortodoncia", "Endodoncia"
-  defaultPrice Float    // Precio en Soles (S/)
-  scope        String   // "FACE", "TOOTH", "GLOBAL"
-  isActive     Boolean  @default(true)
+  category     String   
+  defaultPrice Float    
+  scope        String   
+  isActive     Boolean  @default(true) // Soft Delete
   
   budgetItems  BudgetItem[]
 }
@@ -155,14 +206,22 @@ model Treatment {
 model Budget {
   id          String   @id @default(cuid())
   patientId   String
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  total       Float    // Sumatoria en S/
-  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, PAID
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+
+  total       Float    // Total cotizado
+  paidAmount  Float    @default(0) // Total amortizado/pagado
+  
+  status      String   @default("PENDING") // PENDING, PARTIAL, PAID, CANCELLED
   notes       String?
+  isActive    Boolean  @default(true) // Soft Delete
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   items       BudgetItem[]
+  payments    Payment[]
 
   @@map("budgets")
 }
@@ -173,11 +232,33 @@ model BudgetItem {
   budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   treatmentId String
   treatment   Treatment @relation(fields: [treatmentId], references: [id])
-  price       Float    // Precio acordado en S/ (puede variar del default)
-  toothNumber Int?     // Null si es global
-  toothFace   String?  // Null si es todo el diente
+  price       Float    
+  toothNumber Int?     
+  toothFace   String?  
+  isActive    Boolean  @default(true)
 
   @@map("budget_items")
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  budgetId    String
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+
+  amount      Float    // Monto amortizado en esta transacción
+  method      String   // Efectivo, Tarjeta, Transferencia
+  date        DateTime @default(now())
+  
+  transactionId String? @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  isActive    Boolean  @default(true) // Soft Delete - Anular pago
+  createdAt   DateTime @default(now())
+
+  @@map("payments")
 }
 
 model Transaction {
@@ -186,9 +267,12 @@ model Transaction {
   amount      Decimal  @db.Decimal(10, 2)
   description String
   date        DateTime @default(now())
+  isActive    Boolean  @default(true) // Soft Delete
   
   patientId   String?
   patient     Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  payment     Payment?
 
   createdAt   DateTime @default(now())
   
