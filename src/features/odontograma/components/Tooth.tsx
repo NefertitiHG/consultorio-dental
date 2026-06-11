@@ -108,10 +108,10 @@ export function Tooth({ number, state, onFaceClick, isUpper }: ToothProps) {
 
         {/* Extracción (X Roja grande) */}
         {isExtracted && (
-          <>
+          <g onClick={() => onFaceClick(number, "center")} className="cursor-pointer hover:opacity-70 transition-opacity">
             <line x1="10" y1="5" x2="40" y2="45" stroke="#ef4444" strokeWidth="4" />
             <line x1="40" y1="5" x2="10" y2="45" stroke="#ef4444" strokeWidth="4" />
-          </>
+          </g>
         )}
 
         {/* Brackets */}

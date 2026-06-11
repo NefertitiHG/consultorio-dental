@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { Tooth, ToothFace, ToothCondition, ToothState } from "./Tooth";
-import { Save, Calculator, X } from "lucide-react";
-import { generateBudgetPreview } from "@/features/presupuestos/actions";
+import { Save } from "lucide-react";
 
 const UPPER_ARCH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_ARCH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
@@ -15,12 +14,6 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
   const [selectedCondition, setSelectedCondition] = useState<ToothCondition>("CARIES");
   const [showChildTeeth, setShowChildTeeth] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Estados del presupuesto
-  const [isBudgetOpen, setIsBudgetOpen] = useState(false);
-  const [budgetItems, setBudgetItems] = useState<any[]>([]);
-  const [budgetTotal, setBudgetTotal] = useState(0);
-  const [isGeneratingBudget, setIsGeneratingBudget] = useState(false);
   
   const [teethState, setTeethState] = useState<ToothState[]>(() => {
     const allTeethNums = [...UPPER_ARCH, ...LOWER_ARCH, ...UPPER_CHILD, ...LOWER_CHILD];
@@ -30,7 +23,6 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
     }));
 
     if (initialData && initialData.length > 0) {
-      // Fusionar datos de BD con la estructura por defecto para asegurar que no falte ningún diente ni cara
       return defaultTeeth.map(defTooth => {
         const found = initialData.find((t: any) => t.id === defTooth.id);
         if (found) {
@@ -50,19 +42,30 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
   const handleFaceClick = (toothId: number, face: ToothFace) => {
     setTeethState(prev => prev.map(tooth => {
       if (tooth.id === toothId) {
-        // Toggle (Desmarcar)
-        if (selectedCondition !== "SANO" && tooth.faces[face] === selectedCondition) {
-          const faces = { ...tooth.faces, [face]: "SANO" };
-          return { ...tooth, faces };
+        
+        // Regla especial para la herramienta SANO o Desmarcar doble clic
+        const isRemoving = selectedCondition === "SANO" || tooth.faces[face] === selectedCondition;
+        
+        if (isRemoving) {
+          // Si es una condición que afecta a todo el diente, borramos todo
+          if (["EXTRACCION", "AUSENTE", "CORONA"].includes(tooth.faces.center) || tooth.faces.root === "EXTRACCION") {
+            return {
+              ...tooth,
+              faces: { top: "SANO", right: "SANO", bottom: "SANO", left: "SANO", center: "SANO", root: "SANO" }
+            };
+          }
+          // Sino, borramos solo la cara afectada
+          return {
+            ...tooth,
+            faces: { ...tooth.faces, [face]: "SANO" }
+          };
         }
 
-        // Reglas
+        // Reglas para aplicar condiciones
         if (["EXTRACCION", "AUSENTE", "CORONA", "BRACKET", "IMPLANTE", "PERNO", "ENDODONCIA"].includes(selectedCondition)) {
-          // Si es raíz (Endo, Implante, Perno)
           if (["ENDODONCIA", "IMPLANTE", "PERNO"].includes(selectedCondition)) {
             return { ...tooth, faces: { ...tooth.faces, root: selectedCondition } };
           }
-          // Si es total
           return {
             ...tooth,
             faces: { top: "SANO", right: "SANO", bottom: "SANO", left: "SANO", center: selectedCondition, root: selectedCondition }
@@ -85,18 +88,6 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
     setIsSaving(false);
   };
 
-  const handleGenerateBudget = async () => {
-    setIsGeneratingBudget(true);
-    const res = await generateBudgetPreview(teethState);
-    if (res.success && res.data) {
-      setBudgetTotal(res.data.total);
-      setBudgetItems(res.data.items);
-      setIsBudgetOpen(true);
-    }
-    setIsGeneratingBudget(false);
-  };
-
-  // Agrupación de Herramientas
   const toolGroups = [
     {
       title: "General",
@@ -130,7 +121,6 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
   return (
     <div className="w-full relative">
       
-      {/* Panel Superior: Herramientas Agrupadas */}
       <div className="bg-background border-b border-border p-4">
         <div className="flex justify-between items-center mb-4 border-b border-border pb-2">
           <h2 className="text-lg font-bold text-gold">Herramientas Clínicas</h2>
@@ -163,7 +153,6 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
         </div>
       </div>
 
-      {/* Área del Odontograma */}
       <div className="w-full overflow-x-auto bg-[#0a0a0a] p-4 lg:p-8 custom-scrollbar relative flex justify-center">
         <div className="flex flex-col gap-10 items-center">
           
@@ -202,20 +191,11 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
         </div>
       </div>
 
-      {/* Botones */}
       <div className="bg-background border-t border-border p-4 flex justify-between items-center">
         <div className="text-sm text-muted-foreground hidden sm:block">
-          * Doble clic con herramienta activa = Borrar estado
+          * Doble clic con herramienta activa o herramienta "Borrar/Sano" = Borrar estado
         </div>
         <div className="flex gap-4 w-full sm:w-auto justify-end">
-          <button 
-            onClick={handleGenerateBudget}
-            disabled={isGeneratingBudget}
-            className="flex items-center gap-2 bg-secondary border border-border text-foreground px-4 py-2 rounded-md hover:border-gold transition-colors"
-          >
-            <Calculator size={18} />
-            {isGeneratingBudget ? "Calculando..." : "Presupuesto"}
-          </button>
           <button 
             onClick={handleSave} 
             disabled={isSaving || !onSave}
@@ -226,64 +206,6 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
           </button>
         </div>
       </div>
-
-      {/* MODAL DE PRESUPUESTO */}
-      {isBudgetOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-secondary border-b border-border p-4 flex justify-between items-center">
-              <div className="flex items-center gap-2 text-gold">
-                <Calculator size={20} />
-                <h3 className="font-bold text-lg">Cotización Estimada</h3>
-              </div>
-              <button onClick={() => setIsBudgetOpen(false)} className="text-muted-foreground hover:text-foreground">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              <div className="max-h-[300px] overflow-y-auto mb-6 pr-2 custom-scrollbar">
-                {budgetItems.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No hay tratamientos marcados que generen costo.</p>
-                ) : (
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-muted-foreground uppercase border-b border-border">
-                      <tr>
-                        <th className="py-2">Diente</th>
-                        <th className="py-2">Tratamiento</th>
-                        <th className="py-2 text-right">Costo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {budgetItems.map((item, idx) => (
-                        <tr key={idx} className="border-b border-border/50">
-                          <td className="py-3 font-medium text-foreground">{item.tooth} ({item.face})</td>
-                          <td className="py-3 text-muted-foreground">{item.treatment}</td>
-                          <td className="py-3 text-right font-medium">S/ {item.price.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-              
-              <div className="bg-secondary rounded-lg p-4 flex justify-between items-center border border-border">
-                <span className="text-lg font-medium text-foreground">Total Estimado</span>
-                <span className="text-2xl font-bold text-gold">S/ {budgetTotal.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="p-4 bg-secondary/50 border-t border-border flex justify-end gap-3">
-              <button onClick={() => setIsBudgetOpen(false)} className="px-4 py-2 border border-border rounded text-sm hover:bg-secondary">
-                Cerrar
-              </button>
-              <button className="px-4 py-2 bg-gold text-primary-foreground rounded text-sm font-bold shadow-md hover:bg-accent transition-colors">
-                Crear Documento Formal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
