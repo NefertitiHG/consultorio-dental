@@ -190,8 +190,8 @@ export function InventoryClient({ initialItems }: { initialItems: any[] }) {
                   const isCritical = item.stock <= item.minStock;
                   return (
                     <tr key={item.id} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-4 py-3 font-semibold text-foreground flex items-center gap-2">
-                        {isCritical && <AlertTriangle size={16} className="text-red-500" title="Stock Crítico" />}
+                      <td className="px-4 py-3 font-semibold text-foreground flex items-center gap-2" title={isCritical ? "Stock Crítico" : ""}>
+                        {isCritical && <AlertTriangle size={16} className="text-red-500" />}
                         {item.name}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { v2 as cloudinary } from 'cloudinary';
 
 export async function getPatients() {
   try {
@@ -127,9 +128,7 @@ export async function getEvolutions(patientId: string) {
   }
 }
 
-import { v2 as cloudinary } from 'cloudinary';
-
-// Configurar Cloudinary (se asume que las variables de entorno están cargadas)
+// Cloudinary Configuración
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

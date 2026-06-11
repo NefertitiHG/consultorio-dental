@@ -17,10 +17,10 @@ export default async function FinanzasPage() {
     getRecentTransactions()
   ]);
 
-  if (!metricsResult.success || !transactionsResult.success) {
+    if (!metricsResult.success || !transactionsResult.success) {
     return (
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
-        <Navigation role={session.user.role} />
+        <Navigation />
         <main className="flex-1 p-4 md:p-8 ml-0 md:ml-64">
           <div className="max-w-7xl mx-auto mt-20 md:mt-0 text-center">
             <h1 className="text-2xl font-bold text-red-500">Error al cargar datos financieros</h1>
@@ -33,7 +33,7 @@ export default async function FinanzasPage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background">
-      <Navigation role={session.user.role} />
+      <Navigation />
       
       <main className="flex-1 p-4 md:p-8 ml-0 md:ml-64 overflow-x-hidden">
         <div className="max-w-7xl mx-auto mt-20 md:mt-0">
@@ -47,8 +47,8 @@ export default async function FinanzasPage() {
           </div>
 
           <FinancialDashboard 
-            metrics={metricsResult.data} 
-            recentTransactions={transactionsResult.data} 
+            metrics={metricsResult.data as any} 
+            recentTransactions={transactionsResult.data as any} 
           />
         </div>
       </main>
