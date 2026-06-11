@@ -12,7 +12,8 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 }); // Lunes
   const weekDays = Array.from({ length: 6 }).map((_, i) => addDays(startDate, i)); // Lunes a Sábado
 
-  const hours = Array.from({ length: 12 }).map((_, i) => i + 8); // 8 AM a 7 PM
+  // Mostrar desde las 8 AM hasta las 9 PM (14 horas)
+  const hours = Array.from({ length: 14 }).map((_, i) => i + 8);
 
   const nextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
   const prevWeek = () => setCurrentDate(subWeeks(currentDate, 1));

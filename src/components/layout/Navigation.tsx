@@ -25,10 +25,10 @@ export function Navigation() {
     { name: "Catálogo", href: "/tratamientos", icon: BookOpen },
     { name: "Reportes", href: "/reportes", icon: BarChart3 },
     { name: "Ajustes", href: "/ajustes", icon: Settings },
-    { name: "Personal", href: "/configuracion/personal", icon: Shield, adminOnly: true },
+    { name: "Personal", href: "/configuracion/personal", icon: Shield },
   ];
 
-  const navItems = allNavItems.filter(item => !item.adminOnly || isSuperAdminOrAdmin);
+  const navItems = allNavItems;
 
   return (
     <>

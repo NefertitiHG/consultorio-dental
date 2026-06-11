@@ -15,10 +15,7 @@ export default async function PersonalPage() {
   }
 
   const dbUser = await prisma.user.findUnique({ where: { email: session.user?.email || "" }});
-  
-  if (dbUser?.role !== "SUPERADMIN" && dbUser?.role !== "ADMIN") {
-    redirect("/"); // Solo admin/superadmin pueden ver esto
-  }
+
 
   const users = await prisma.user.findMany({
     orderBy: { role: "asc" }
