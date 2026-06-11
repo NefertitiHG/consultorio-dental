@@ -113,7 +113,12 @@ export async function getEvolutions(patientId: string) {
       where: { patientId, isActive: true },
       orderBy: { date: "desc" },
       include: {
-        doctor: { select: { name: true } }
+        doctor: { select: { name: true } },
+        materials: {
+          include: {
+            inventoryItem: { select: { name: true, unit: true } }
+          }
+        }
       }
     });
     return { success: true, data: evolutions };
@@ -131,12 +136,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function createEvolution(formData: FormData) {
+  export async function createEvolution(formData: FormData) {
   try {
     const patientId = formData.get("patientId") as string;
     const userId = formData.get("userId") as string;
     const treatment = formData.get("treatment") as string;
     const notes = formData.get("notes") as string;
+    const materialsStr = formData.get("materials") as string;
+    const materials = materialsStr ? JSON.parse(materialsStr) : [];
     const file = formData.get("file") as File | null;
 
     let attachments = [];
@@ -164,14 +171,32 @@ export async function createEvolution(formData: FormData) {
       });
     }
 
-    const evolution = await prisma.clinicalEvolution.create({
-      data: {
-        patientId,
-        userId,
-        treatment,
-        notes,
-        attachments: attachments.length > 0 ? attachments : undefined
+    const evolution = await prisma.$transaction(async (tx) => {
+      const ev = await tx.clinicalEvolution.create({
+        data: {
+          patientId,
+          userId,
+          treatment,
+          notes,
+          attachments: attachments.length > 0 ? attachments : undefined,
+          materials: {
+            create: materials.map((m: any) => ({
+              inventoryItemId: m.id,
+              quantity: m.quantity
+            }))
+          }
+        }
+      });
+
+      // Deducir stock
+      for (const m of materials) {
+        await tx.inventoryItem.update({
+          where: { id: m.id },
+          data: { stock: { decrement: m.quantity } }
+        });
       }
+
+      return ev;
     });
 
     revalidatePath(`/pacientes/${patientId}`);
@@ -205,9 +230,26 @@ export async function updateEvolution(id: string, formData: FormData) {
 
 export async function softDeleteEvolution(id: string, patientId: string) {
   try {
-    await prisma.clinicalEvolution.update({
-      where: { id },
-      data: { isActive: false }
+    await prisma.$transaction(async (tx) => {
+      const ev = await tx.clinicalEvolution.findUnique({
+        where: { id },
+        include: { materials: true }
+      });
+      
+      if (ev && ev.isActive) {
+        await tx.clinicalEvolution.update({
+          where: { id },
+          data: { isActive: false }
+        });
+        
+        // Retornar stock
+        for (const m of ev.materials) {
+          await tx.inventoryItem.update({
+            where: { id: m.inventoryItemId },
+            data: { stock: { increment: m.quantity } }
+          });
+        }
+      }
     });
     revalidatePath(`/pacientes/${patientId}`);
     return { success: true };

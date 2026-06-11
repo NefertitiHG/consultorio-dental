@@ -14,10 +14,15 @@ interface Evolution {
   };
 }
 
-export function EvolutionList({ patientId, evolutions, userId }: { patientId: string, evolutions: Evolution[], userId: string }) {
+export function EvolutionList({ patientId, evolutions, userId, inventoryItems = [] }: { patientId: string, evolutions: Evolution[], userId: string, inventoryItems?: any[] }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Inventario
+  const [selectedMaterials, setSelectedMaterials] = useState<{id: string, name: string, quantity: number, unit: string}[]>([]);
+  const [matSelect, setMatSelect] = useState("");
+  const [matQty, setMatQty] = useState(1);
 
   const handleSubmitNew = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,6 +30,9 @@ export function EvolutionList({ patientId, evolutions, userId }: { patientId: st
     const formData = new FormData(e.currentTarget);
     formData.append("patientId", patientId);
     formData.append("userId", userId);
+    if (selectedMaterials.length > 0) {
+      formData.append("materials", JSON.stringify(selectedMaterials.map(m => ({ id: m.id, quantity: m.quantity }))));
+    }
     
     await createEvolution(formData);
     
@@ -71,7 +79,57 @@ export function EvolutionList({ patientId, evolutions, userId }: { patientId: st
         <form onSubmit={handleSubmitNew} className="bg-background border border-border p-4 rounded-lg mb-6 space-y-4">
           <input required name="treatment" type="text" placeholder="Tratamiento realizado (ej. Endodoncia Pieza 14)" className="w-full bg-secondary border border-border rounded p-2 focus:border-gold outline-none" />
           <textarea required name="notes" rows={3} placeholder="Notas clínicas, procedimientos..." className="w-full bg-secondary border border-border rounded p-2 focus:border-gold outline-none"></textarea>
-          <div className="flex justify-between items-center">
+          
+          <div className="bg-secondary/30 p-4 rounded border border-border">
+            <label className="block text-xs font-semibold text-muted-foreground mb-2">Materiales / Insumos Utilizados</label>
+            <div className="flex gap-2 mb-3">
+              <select 
+                value={matSelect} 
+                onChange={e => setMatSelect(e.target.value)}
+                className="flex-1 bg-background border border-border rounded p-2 text-sm outline-none focus:border-gold"
+              >
+                <option value="">Seleccione un ítem...</option>
+                {inventoryItems.map(item => (
+                  <option key={item.id} value={item.id}>{item.name} (Stock: {item.stock} {item.unit})</option>
+                ))}
+              </select>
+              <input 
+                type="number" min="0.1" step="0.1" 
+                value={matQty} 
+                onChange={e => setMatQty(Number(e.target.value))}
+                className="w-20 bg-background border border-border rounded p-2 text-sm text-center outline-none"
+              />
+              <button 
+                type="button" 
+                onClick={() => {
+                  if(!matSelect) return;
+                  const item = inventoryItems.find(i => i.id === matSelect);
+                  if(item) {
+                    setSelectedMaterials([...selectedMaterials, { id: item.id, name: item.name, quantity: matQty, unit: item.unit }]);
+                    setMatSelect("");
+                    setMatQty(1);
+                  }
+                }}
+                className="bg-gold text-primary-foreground px-3 rounded text-sm font-bold"
+              >
+                +
+              </button>
+            </div>
+            {selectedMaterials.length > 0 && (
+              <ul className="space-y-1">
+                {selectedMaterials.map((m, idx) => (
+                  <li key={idx} className="flex justify-between items-center bg-background px-3 py-1.5 rounded text-sm border border-border">
+                    <span>{m.name} - <strong className="text-gold">{m.quantity} {m.unit}</strong></span>
+                    <button type="button" onClick={() => setSelectedMaterials(selectedMaterials.filter((_, i) => i !== idx))} className="text-red-500 hover:text-red-700">
+                      <X size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="flex justify-between items-center mt-4">
             <div className="relative overflow-hidden inline-block">
               <button type="button" className="text-muted-foreground flex items-center gap-1 hover:text-gold text-sm bg-secondary px-3 py-1.5 rounded border border-border">
                 <Paperclip size={16} /> Adjuntar Radiografía / Foto
@@ -138,6 +196,20 @@ export function EvolutionList({ patientId, evolutions, userId }: { patientId: st
                           <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
                         </a>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Materiales usados */}
+                  {(evo as any).materials && (evo as any).materials.length > 0 && (
+                    <div className="mb-4 bg-secondary/30 p-3 rounded-lg border border-border">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Materiales utilizados:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(evo as any).materials.map((m: any, idx: number) => (
+                          <span key={idx} className="bg-background text-xs px-2 py-1 rounded border border-border shadow-sm">
+                            {m.inventoryItem.name} <strong className="text-gold ml-1">{m.quantity} {m.inventoryItem.unit}</strong>
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                   

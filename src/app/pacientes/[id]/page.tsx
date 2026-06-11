@@ -1,6 +1,7 @@
 import { getPatientById, getEvolutions } from "@/features/pacientes/actions";
 import { getBudgetsByPatient } from "@/features/presupuestos/actions";
 import { getLatestOdontogram, saveOdontogram } from "@/features/odontograma/actions";
+import { getInventory } from "@/features/inventario/actions";
 import { ArrowLeft, Edit, Phone, Mail } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,11 +17,12 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
   const resolvedParams = await params;
   const session = await getServerSession(authOptions);
   
-  const [result, odontogramResult, evolutionsResult, budgetsResult] = await Promise.all([
+  const [result, odontogramResult, evolutionsResult, budgetsResult, inventoryResult] = await Promise.all([
     getPatientById(resolvedParams.id),
     getLatestOdontogram(resolvedParams.id),
     getEvolutions(resolvedParams.id),
-    getBudgetsByPatient(resolvedParams.id)
+    getBudgetsByPatient(resolvedParams.id),
+    getInventory()
   ]);
   
   if (!result.success || !result.data) {
@@ -30,6 +32,7 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
   const patient = result.data;
   const evolutions = evolutionsResult.success && evolutionsResult.data ? (evolutionsResult.data as any) : [];
   const budgets = budgetsResult.success && budgetsResult.data ? (budgetsResult.data as any) : [];
+  const inventoryItems = inventoryResult.success && inventoryResult.data ? inventoryResult.data : [];
   const initialOdontogramData = odontogramResult.success && odontogramResult.data ? (odontogramResult.data.data as any) : undefined;
 
   // Server Action wrapper para pasar al cliente
@@ -115,6 +118,7 @@ export default async function PatientDetailsPage({ params }: { params: Promise<{
             patientId={patient.id} 
             evolutions={evolutions} 
             userId={session?.user?.id || ""}
+            inventoryItems={inventoryItems}
           />
         </div>
       </div>

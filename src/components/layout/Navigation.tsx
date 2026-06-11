@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Home, Users, CalendarDays, CircleDollarSign, Settings, BookOpen, BarChart3, Shield, LogOut } from "lucide-react";
+import { Home, Users, CalendarDays, CircleDollarSign, Settings, BookOpen, BarChart3, Shield, LogOut, Package, LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function Navigation() {
@@ -18,11 +18,12 @@ export function Navigation() {
   const isSuperAdminOrAdmin = isMounted && ((session?.user as any)?.role === "SUPERADMIN" || (session?.user as any)?.role === "ADMIN");
 
   const allNavItems = [
-    { name: "Inicio", href: "/dashboard", icon: Home },
-    { name: "Citas", href: "/citas", icon: CalendarDays },
-    { name: "Pacientes", href: "/pacientes", icon: Users },
-    { name: "Finanzas", href: "/finanzas", icon: CircleDollarSign },
-    { name: "Catálogo", href: "/tratamientos", icon: BookOpen },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Agenda', href: '/citas', icon: CalendarDays },
+    { name: 'Pacientes', href: '/pacientes', icon: Users },
+    { name: 'Inventario', href: '/inventario', icon: Package },
+    { name: 'Tratamientos', href: '/tratamientos', icon: BookOpen },
+    { name: 'Finanzas', href: '/finanzas', icon: CircleDollarSign },
     { name: "Reportes", href: "/reportes", icon: BarChart3 },
     { name: "Ajustes", href: "/ajustes", icon: Settings },
     { name: "Personal", href: "/configuracion/personal", icon: Shield },

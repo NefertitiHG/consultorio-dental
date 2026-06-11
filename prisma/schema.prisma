@@ -180,6 +180,7 @@ model ClinicalEvolution {
   treatment   String   // Nombre general del tratamiento realizado
   notes       String   @db.Text
   attachments Json?    // URLs de radiografías, fotos, etc.
+  materials   EvolutionMaterial[] // Insumos deducidos
   isActive    Boolean  @default(true) // Soft Delete
 
   createdAt   DateTime @default(now())
@@ -282,4 +283,36 @@ model Transaction {
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+// ----------------------
+// MÓDULO DE INVENTARIO
+// ----------------------
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   // MEDICAMENTO, INSUMO, HERRAMIENTA
+  unit        String   // UNIDADES, CAJAS, MILILITROS
+  stock       Float    @default(0)
+  minStock    Float    @default(5)
+  cost        Float    @default(0) // Costo por unidad
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  materialsUsed EvolutionMaterial[]
+
+  @@map("inventory_items")
+}
+
+model EvolutionMaterial {
+  id              String            @id @default(cuid())
+  evolutionId     String
+  evolution       ClinicalEvolution @relation(fields: [evolutionId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem     @relation(fields: [inventoryItemId], references: [id])
+  quantity        Float             @default(1)
+
+  @@map("evolution_materials")
 }
