@@ -122,12 +122,47 @@ export async function getEvolutions(patientId: string) {
   }
 }
 
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configurar Cloudinary (se asume que las variables de entorno están cargadas)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 export async function createEvolution(formData: FormData) {
   try {
     const patientId = formData.get("patientId") as string;
     const userId = formData.get("userId") as string;
     const treatment = formData.get("treatment") as string;
     const notes = formData.get("notes") as string;
+    const file = formData.get("file") as File | null;
+
+    let attachments = [];
+
+    // Si hay un archivo adjunto, subirlo a Cloudinary
+    if (file && file.size > 0) {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'consultorio_evoluciones' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(buffer);
+      }) as any;
+
+      attachments.push({
+        url: uploadResult.secure_url,
+        type: file.type,
+        name: file.name
+      });
+    }
 
     const evolution = await prisma.clinicalEvolution.create({
       data: {
@@ -135,12 +170,14 @@ export async function createEvolution(formData: FormData) {
         userId,
         treatment,
         notes,
+        attachments: attachments.length > 0 ? attachments : undefined
       }
     });
 
     revalidatePath(`/pacientes/${patientId}`);
     return { success: true, data: evolution };
   } catch (error) {
+    console.error("Error creando evolución:", error);
     return { success: false, error: "Error al crear la evolución." };
   }
 }

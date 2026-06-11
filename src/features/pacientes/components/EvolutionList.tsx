@@ -72,9 +72,17 @@ export function EvolutionList({ patientId, evolutions, userId }: { patientId: st
           <input required name="treatment" type="text" placeholder="Tratamiento realizado (ej. Endodoncia Pieza 14)" className="w-full bg-secondary border border-border rounded p-2 focus:border-gold outline-none" />
           <textarea required name="notes" rows={3} placeholder="Notas clínicas, procedimientos..." className="w-full bg-secondary border border-border rounded p-2 focus:border-gold outline-none"></textarea>
           <div className="flex justify-between items-center">
-            <button type="button" className="text-muted-foreground flex items-center gap-1 hover:text-gold text-sm">
-              <Paperclip size={16} /> Adjuntar Archivo
-            </button>
+            <div className="relative overflow-hidden inline-block">
+              <button type="button" className="text-muted-foreground flex items-center gap-1 hover:text-gold text-sm bg-secondary px-3 py-1.5 rounded border border-border">
+                <Paperclip size={16} /> Adjuntar Radiografía / Foto
+              </button>
+              <input 
+                type="file" 
+                name="file" 
+                accept="image/*"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </div>
             <div className="flex gap-2">
               <button type="button" onClick={() => setIsFormOpen(false)} className="px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">Cancelar</button>
               <button type="submit" disabled={loading} className="px-4 py-2 bg-gold text-primary-foreground font-bold rounded-md text-sm">{loading ? "Guardando..." : "Guardar"}</button>
@@ -120,6 +128,18 @@ export function EvolutionList({ patientId, evolutions, userId }: { patientId: st
                     </div>
                   </div>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-4 whitespace-pre-wrap">{evo.notes}</p>
+                  
+                  {/* Visualización de Imágenes Adjuntas */}
+                  {(evo as any).attachments && (evo as any).attachments.length > 0 && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {(evo as any).attachments.map((file: any, i: number) => (
+                        <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="relative block w-20 h-20 rounded-lg border border-border overflow-hidden hover:opacity-80 transition-opacity">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-2 pt-3 border-t border-border">
                     <UserCircle size={16} className="text-muted-foreground" />

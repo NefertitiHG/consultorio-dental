@@ -57,14 +57,23 @@ export function BudgetList({ patientId, budgets }: { patientId: string, budgets:
             const isPaid = budget.total - budget.paidAmount <= 0;
             return (
               <div key={budget.id} className="bg-background border border-border rounded-lg p-4 flex flex-col gap-4 hover:border-gold/50 transition-colors">
-                <div className="flex items-center gap-4 w-full border-b border-border pb-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPaid ? "bg-green-500/20 text-green-500" : "bg-gold/20 text-gold"}`}>
-                    {isPaid ? <CheckCircle size={20} /> : <FileText size={20} />}
+                <div className="flex justify-between items-start w-full border-b border-border pb-3">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isPaid ? "bg-green-500/20 text-green-500" : "bg-gold/20 text-gold"}`}>
+                      {isPaid ? <CheckCircle size={20} /> : <FileText size={20} />}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground text-sm">Presupuesto {new Date(budget.createdAt).toLocaleDateString("es-ES")}</h3>
+                      <p className="text-xs text-muted-foreground">{budget.items.length} tratamientos</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-foreground text-sm">Presupuesto {new Date(budget.createdAt).toLocaleDateString("es-ES")}</h3>
-                    <p className="text-xs text-muted-foreground">{budget.items.length} tratamientos</p>
-                  </div>
+                  <Link 
+                    href={`/pacientes/${patientId}/presupuestos/${budget.id}/print`}
+                    target="_blank"
+                    className="p-1.5 text-muted-foreground hover:text-gold hover:bg-gold/10 rounded transition-colors text-xs font-semibold flex items-center gap-1"
+                  >
+                    PDF
+                  </Link>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 w-full text-center">
@@ -95,7 +104,16 @@ export function BudgetList({ patientId, budgets }: { patientId: string, budgets:
                             <span className="text-gold font-semibold">{new Date(payment.date).toLocaleDateString("es-ES")}</span>
                             <span className="text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-border">{payment.method}</span>
                           </div>
-                          <span className="font-bold text-foreground">S/ {payment.amount.toFixed(2)}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-foreground">S/ {payment.amount.toFixed(2)}</span>
+                            <Link 
+                              href={`/pacientes/${patientId}/pagos/${payment.id}/print`}
+                              target="_blank"
+                              className="text-muted-foreground hover:text-gold"
+                            >
+                              [PDF]
+                            </Link>
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -60,6 +60,49 @@ export async function getBudgetsByPatient(patientId: string) {
   }
 }
 
+export async function getBudgetById(budgetId: string) {
+  try {
+    const budget = await prisma.budget.findUnique({
+      where: { id: budgetId, isActive: true },
+      include: {
+        patient: true,
+        items: {
+          where: { isActive: true },
+          include: { treatment: true }
+        },
+        payments: {
+          where: { isActive: true },
+          orderBy: { date: 'desc' }
+        }
+      }
+    });
+    if (!budget) return { success: false, error: "Presupuesto no encontrado" };
+    return { success: true, data: budget };
+  } catch (error) {
+    return { success: false, error: "Error al obtener el presupuesto." };
+  }
+}
+
+export async function getPaymentById(paymentId: string) {
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId, isActive: true },
+      include: {
+        budget: {
+          include: {
+            patient: true,
+            items: { include: { treatment: true } }
+          }
+        }
+      }
+    });
+    if (!payment) return { success: false, error: "Pago no encontrado" };
+    return { success: true, data: payment };
+  } catch (error) {
+    return { success: false, error: "Error al obtener el pago." };
+  }
+}
+
 export async function generateBudgetPreview(teethState: any[]) {
   try {
     let total = 0;
