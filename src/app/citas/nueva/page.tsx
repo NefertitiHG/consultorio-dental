@@ -34,9 +34,8 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     const timeStr = formData.get("time") as string;
     const notes = formData.get("notes") as string;
     
-    // Obtener el doctor seleccionado, o si no hay (por error), usar el logueado
-    const selectedDoctorId = formData.get("doctorId") as string;
-    const userId = selectedDoctorId || session?.user?.id || "";
+    // El doctor que agenda la cita es obligatoriamente el usuario logueado
+    const userId = session?.user?.id || "";
 
     // Añadimos la zona horaria de Perú/Colombia (-05:00) para evitar desfase en Vercel (UTC)
     const date = new Date(`${dateStr}T${timeStr}:00-05:00`);
@@ -65,16 +64,6 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
             <option value="">Seleccione un paciente...</option>
             {patients.map(p => (
               <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold flex items-center gap-2"><User size={16} className="text-gold"/> Doctor / Especialista</label>
-          <select name="doctorId" required defaultValue={session?.user?.id || ""} className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold">
-            <option value="">Asignar a un especialista...</option>
-            {doctors.map(d => (
-              <option key={d.id} value={d.id}>Dr. {d.name} ({d.email})</option>
             ))}
           </select>
         </div>

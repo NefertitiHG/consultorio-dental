@@ -112,6 +112,15 @@ export function Navigation() {
                 </li>
               );
             })}
+            <li className="flex-1">
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="flex flex-col items-center justify-center h-full w-full gap-1 pt-1"
+              >
+                <LogOut size={24} className="text-red-500" />
+                <span className="text-[10px] text-red-500 font-semibold">Salir</span>
+              </button>
+            </li>
           </ul>
         </nav>
       </>

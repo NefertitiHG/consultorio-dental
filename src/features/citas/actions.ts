@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function getAppointments(startDate: Date, endDate: Date) {
+export async function getAppointments(startDate: Date, endDate: Date, userId?: string) {
   try {
     const appointments = await prisma.appointment.findMany({
       where: {
@@ -12,7 +12,8 @@ export async function getAppointments(startDate: Date, endDate: Date) {
           lte: endDate,
         },
         isActive: true,
-        patient: { is: { isActive: true } } // Sintaxis estricta de Prisma para relaciones
+        patient: { is: { isActive: true } }, // Sintaxis estricta de Prisma para relaciones
+        ...(userId ? { userId } : {}) // Filtrar por doctor si se proporciona el ID
       },
       include: {
         patient: {

@@ -1,16 +1,21 @@
 import { getAppointments } from "@/features/citas/actions";
 import { WeeklyCalendar } from "@/features/citas/components/WeeklyCalendar";
 import { startOfWeek, endOfWeek, subWeeks, addWeeks } from "date-fns";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const dynamic = "force-dynamic";
 
 export default async function CitasPage() {
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+
   // Por ahora cargamos un rango amplio para la demo
   const today = new Date();
   const start = subWeeks(startOfWeek(today), 2);
   const end = addWeeks(endOfWeek(today), 2);
 
-  const res = await getAppointments(start, end);
+  const res = await getAppointments(start, end, userId);
   const appointments = res.success ? res.data : [];
 
   return (
