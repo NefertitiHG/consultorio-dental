@@ -29,6 +29,7 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     const patientId = formData.get("patientId") as string;
     const dateStr = formData.get("date") as string;
     const timeStr = formData.get("time") as string;
+    const durationMins = parseInt(formData.get("durationMins") as string) || 30;
     const notes = formData.get("notes") as string;
     
     // El doctor que agenda la cita es obligatoriamente el usuario logueado
@@ -37,7 +38,7 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     // Añadimos la zona horaria de Perú/Colombia (-05:00) para evitar desfase en Vercel (UTC)
     const date = new Date(`${dateStr}T${timeStr}:00-05:00`);
 
-    const result = await createAppointment({ patientId, date, notes, userId });
+    const result = await createAppointment({ patientId, date, durationMins, notes, userId });
     if (!result.success) {
       redirect(`/citas/nueva?error=${encodeURIComponent(result.error!)}&date=${dateStr}&time=${timeStr}`);
     }
@@ -70,7 +71,7 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
           <PatientSearch patients={patients} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-semibold flex items-center gap-2"><Calendar size={16} className="text-gold"/> Fecha</label>
             <input type="date" name="date" defaultValue={defaultDate} required className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold" />
@@ -78,6 +79,17 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
           <div className="space-y-2">
             <label className="text-sm font-semibold flex items-center gap-2"><Clock size={16} className="text-gold"/> Hora</label>
             <input type="time" name="time" defaultValue={defaultTime} required className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold" />
+          </div>
+          <div className="space-y-2 col-span-2 md:col-span-1">
+            <label className="text-sm font-semibold flex items-center gap-2"><Clock size={16} className="text-gold"/> Duración</label>
+            <select name="durationMins" defaultValue={30} className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold">
+              <option value={15}>15 minutos</option>
+              <option value={30}>30 minutos</option>
+              <option value={45}>45 minutos</option>
+              <option value={60}>1 hora</option>
+              <option value={90}>1 hora y media</option>
+              <option value={120}>2 horas</option>
+            </select>
           </div>
         </div>
 

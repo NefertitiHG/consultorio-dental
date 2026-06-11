@@ -37,25 +37,36 @@ export async function getAppointments(startDate: Date, endDate: Date, userId?: s
 
 import { google } from "googleapis";
 
-export async function createAppointment(data: { patientId: string; date: Date; notes?: string, userId: string }) {
+export async function createAppointment(data: { patientId: string; date: Date; durationMins: number; notes?: string, userId: string }) {
   try {
-    const thirtyMinutes = 30 * 60 * 1000;
+    const bufferMins = 10; // Tiempo de bioseguridad / limpieza
+    const duration = data.durationMins || 30;
+    const newStart = data.date.getTime();
+    const newEnd = newStart + (duration + bufferMins) * 60000;
     
-    // Validar si ya existe una cita en el rango de 30 minutos para ese doctor
-    const overlapping = await prisma.appointment.findFirst({
+    // Traer citas del día para ese doctor para validar solapamientos
+    const startOfDay = new Date(data.date);
+    startOfDay.setHours(0,0,0,0);
+    const endOfDay = new Date(data.date);
+    endOfDay.setHours(23,59,59,999);
+
+    const existingAppointments = await prisma.appointment.findMany({
       where: {
         userId: data.userId,
         isActive: true,
         status: { in: ["SCHEDULED", "COMPLETED"] },
-        date: {
-          gt: new Date(data.date.getTime() - thirtyMinutes),
-          lt: new Date(data.date.getTime() + thirtyMinutes),
-        }
+        date: { gte: startOfDay, lte: endOfDay }
       }
     });
 
-    if (overlapping) {
-      return { success: false, error: "Ya existe una cita programada en ese bloque de 30 minutos." };
+    for (const app of existingAppointments) {
+      const existStart = app.date.getTime();
+      const existEnd = existStart + ((app.durationMins || 30) + bufferMins) * 60000;
+      
+      // Si el inicio de uno es menor que el fin del otro, hay cruce
+      if (existStart < newEnd && newStart < existEnd) {
+        return { success: false, error: "Ya existe una cita o no hay tiempo suficiente (se incluyen 10 min de limpieza)." };
+      }
     }
 
     const appointment = await prisma.appointment.create({
@@ -63,6 +74,7 @@ export async function createAppointment(data: { patientId: string; date: Date; n
         patientId: data.patientId,
         userId: data.userId,
         date: data.date,
+        durationMins: duration,
         notes: data.notes || "",
         status: "SCHEDULED",
       },
@@ -91,7 +103,7 @@ export async function createAppointment(data: { patientId: string; date: Date; n
         const calendar = google.calendar({ version: "v3", auth: oauth2Client });
         
         const startTime = data.date;
-        const endTime = new Date(startTime.getTime() + 30 * 60000); // 30 min por defecto
+        const endTime = new Date(startTime.getTime() + duration * 60000); // Duración real seleccionada
         
         const event = await calendar.events.insert({
           calendarId: "primary",
@@ -157,7 +169,7 @@ export async function getAppointmentById(id: string) {
 
 export async function updateAppointment(
   id: string, 
-  data: { date: Date; notes?: string; status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" }
+  data: { date: Date; durationMins: number; notes?: string; status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" }
 ) {
   try {
     // Necesitamos obtener la cita original para saber qué doctor es
@@ -167,25 +179,36 @@ export async function updateAppointment(
       return { success: false, error: "Cita no encontrada." };
     }
 
-    // Si cambió la fecha o la hora, validamos superposición
-    if (existingAppointment.date.getTime() !== data.date.getTime() && (data.status === "SCHEDULED" || data.status === "COMPLETED")) {
-      const thirtyMinutes = 30 * 60 * 1000;
+    // Validar superposición
+    if (data.status === "SCHEDULED" || data.status === "COMPLETED") {
+      const bufferMins = 10;
+      const duration = data.durationMins || 30;
+      const newStart = data.date.getTime();
+      const newEnd = newStart + (duration + bufferMins) * 60000;
       
-      const overlapping = await prisma.appointment.findFirst({
+      const startOfDay = new Date(data.date);
+      startOfDay.setHours(0,0,0,0);
+      const endOfDay = new Date(data.date);
+      endOfDay.setHours(23,59,59,999);
+
+      const existingAppointments = await prisma.appointment.findMany({
         where: {
-          id: { not: id },
           userId: existingAppointment.userId,
           isActive: true,
           status: { in: ["SCHEDULED", "COMPLETED"] },
-          date: {
-            gt: new Date(data.date.getTime() - thirtyMinutes),
-            lt: new Date(data.date.getTime() + thirtyMinutes),
-          }
+          date: { gte: startOfDay, lte: endOfDay }
         }
       });
 
-      if (overlapping) {
-        return { success: false, error: "Ya existe otra cita programada en ese bloque de 30 minutos." };
+      for (const app of existingAppointments) {
+        if (app.id === id) continue; // No cruzar consigo misma
+        
+        const existStart = app.date.getTime();
+        const existEnd = existStart + ((app.durationMins || 30) + bufferMins) * 60000;
+        
+        if (existStart < newEnd && newStart < existEnd) {
+          return { success: false, error: "Ya existe otra cita programada o no hay tiempo suficiente (incluyendo 10 min de bioseguridad)." };
+        }
       }
     }
 
@@ -193,6 +216,7 @@ export async function updateAppointment(
       where: { id },
       data: {
         date: data.date,
+        durationMins: data.durationMins,
         notes: data.notes || "",
         status: data.status,
       },

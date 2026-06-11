@@ -92,8 +92,8 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
                     .map(app => {
                       const appDate = new Date(app.date);
                       const top = (appDate.getHours() - 8) * 80 + (appDate.getMinutes() / 60) * 80;
-                      // Suponiendo 1 hora de duración por defecto
-                      const height = 80;
+                      // 80px equivalen a 60 minutos (1 hora)
+                      const height = ((app.durationMins || 30) / 60) * 80;
 
                       return (
                         <Link 

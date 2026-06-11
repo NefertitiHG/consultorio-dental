@@ -29,13 +29,14 @@ export default async function EditarCitaPage({
     "use server";
     const dateStr = formData.get("date") as string;
     const timeStr = formData.get("time") as string;
+    const durationMins = parseInt(formData.get("durationMins") as string) || 30;
     const notes = formData.get("notes") as string;
     const status = formData.get("status") as "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
     
     // Añadimos la zona horaria de Perú/Colombia (-05:00) para evitar desfase en Vercel (UTC)
     const date = new Date(`${dateStr}T${timeStr}:00-05:00`);
 
-    const result = await updateAppointment(id, { date, notes, status });
+    const result = await updateAppointment(id, { date, durationMins, notes, status });
     if (!result.success) {
       redirect(`/citas/${id}/editar?error=${encodeURIComponent(result.error!)}`);
     }
@@ -85,6 +86,17 @@ export default async function EditarCitaPage({
             <div className="space-y-2">
               <label className="text-sm font-semibold flex items-center gap-2"><Clock size={16} className="text-gold"/> Hora</label>
               <input type="time" name="time" defaultValue={defaultTime} required className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold flex items-center gap-2"><Clock size={16} className="text-gold"/> Duración</label>
+              <select name="durationMins" defaultValue={appointment.durationMins || 30} className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:border-gold">
+                <option value={15}>15 minutos</option>
+                <option value={30}>30 minutos</option>
+                <option value={45}>45 minutos</option>
+                <option value={60}>1 hora</option>
+                <option value={90}>1 hora y media</option>
+                <option value={120}>2 horas</option>
+              </select>
             </div>
             <div className="space-y-2 col-span-2 md:col-span-1">
               <label className="text-sm font-semibold flex items-center gap-2"><Activity size={16} className="text-gold"/> Estado</label>
