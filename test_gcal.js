@@ -1,7 +1,11 @@
 const fs = require('fs');
 const envConfig = fs.readFileSync('.env', 'utf8').split('\n').forEach(line => {
-  const [key, value] = line.split('=');
-  if (key && value) process.env[key.trim()] = value.trim();
+  const parts = line.split('=');
+  if (parts.length >= 2) {
+    const key = parts[0].trim();
+    const value = parts.slice(1).join('=').trim().replace(/^"|"$/g, '');
+    process.env[key] = value;
+  }
 });
 const { PrismaClient } = require('@prisma/client');
 const { google } = require('googleapis');

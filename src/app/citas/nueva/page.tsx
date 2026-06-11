@@ -38,7 +38,8 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     const selectedDoctorId = formData.get("doctorId") as string;
     const userId = selectedDoctorId || session?.user?.id || "";
 
-    const date = new Date(`${dateStr}T${timeStr}:00`);
+    // Añadimos la zona horaria de Perú/Colombia (-05:00) para evitar desfase en Vercel (UTC)
+    const date = new Date(`${dateStr}T${timeStr}:00-05:00`);
 
     await createAppointment({ patientId, date, notes, userId });
     redirect("/citas");

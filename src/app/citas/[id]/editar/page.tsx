@@ -24,7 +24,8 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
     const notes = formData.get("notes") as string;
     const status = formData.get("status") as "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
     
-    const date = new Date(`${dateStr}T${timeStr}:00`);
+    // Añadimos la zona horaria de Perú/Colombia (-05:00) para evitar desfase en Vercel (UTC)
+    const date = new Date(`${dateStr}T${timeStr}:00-05:00`);
 
     await updateAppointment(appointmentId, { date, notes, status });
     redirect("/citas");
