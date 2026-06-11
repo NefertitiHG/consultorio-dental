@@ -7,7 +7,9 @@ import { Search, User } from "lucide-react";
 export function PatientListClient({ initialPatients }: { initialPatients: any[] }) {
   const [search, setSearch] = useState("");
 
-  const filteredPatients = initialPatients.filter((paciente) => {
+  const safePatients = initialPatients || [];
+
+  const filteredPatients = safePatients.filter((paciente) => {
     const term = search.toLowerCase();
     const fullName = `${paciente.firstName} ${paciente.lastName}`.toLowerCase();
     const dni = paciente.dni?.toLowerCase() || "";
