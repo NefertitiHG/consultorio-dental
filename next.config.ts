@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  turbopack: {}, // Solución para el plugin next-pwa con Next.js 16+ Turbopack
 };
 
 export default withPWA(nextConfig);
