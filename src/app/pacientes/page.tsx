@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PacientesPage() {
   const result = await getPatients();
-  const pacientes = result.success ? result.data : [];
+  const pacientes = (result.success && result.data) ? result.data : [];
 
   return (
     <div className="p-6 md:p-10">
