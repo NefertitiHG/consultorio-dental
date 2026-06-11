@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
 import { Navigation } from "@/components/layout/Navigation";
+import { FeedbackWidget } from "@/components/ui/FeedbackWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,9 @@ export default function RootLayout({
             <main className="flex-1 md:ml-64 pb-16 md:pb-0 overflow-y-auto">
               {children}
             </main>
+            
+            {/* Widget Global */}
+            <FeedbackWidget />
           </div>
         </AuthProvider>
       </body>

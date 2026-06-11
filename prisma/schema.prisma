@@ -57,6 +57,7 @@ model User {
   sessions      Session[]
   appointments  Appointment[]
   evolutions    ClinicalEvolution[]
+  suggestions   Suggestion[]
 
   @@map("users")
 }
@@ -315,4 +316,21 @@ model EvolutionMaterial {
   quantity        Float             @default(1)
 
   @@map("evolution_materials")
+}
+
+// ----------------------
+// MÓDULO DE SUGERENCIAS / FEEDBACK
+// ----------------------
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String   @db.Text
+  response  String?  @db.Text
+  status    String   @default("PENDING") // PENDING, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("suggestions")
 }

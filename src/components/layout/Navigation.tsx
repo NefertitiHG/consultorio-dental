@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Home, Users, CalendarDays, CircleDollarSign, Settings, BookOpen, BarChart3, Shield, LogOut, Package, LayoutDashboard } from "lucide-react";
+import { Home, Users, CalendarDays, CircleDollarSign, Settings, BookOpen, BarChart3, Shield, LogOut, Package, LayoutDashboard, Inbox } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function Navigation() {
@@ -29,11 +29,12 @@ export function Navigation() {
     { name: 'Tratamientos', href: '/tratamientos', icon: BookOpen },
     { name: 'Finanzas', href: '/finanzas', icon: CircleDollarSign },
     { name: "Reportes", href: "/reportes", icon: BarChart3 },
+    { name: "Buzón", href: "/buzon", icon: Inbox, adminOnly: true },
     { name: "Ajustes", href: "/ajustes", icon: Settings },
-    { name: "Personal", href: "/configuracion/personal", icon: Shield },
+    { name: "Personal", href: "/configuracion/personal", icon: Shield, adminOnly: true },
   ];
 
-  const navItems = allNavItems;
+  const navItems = allNavItems.filter(item => !item.adminOnly || isSuperAdminOrAdmin);
 
   return (
     <>
