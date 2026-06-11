@@ -102,10 +102,34 @@ export function WeeklyCalendar({ initialAppointments }: { initialAppointments: a
                           className="absolute left-1 right-1 bg-gold/10 border border-gold rounded p-2 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer z-20 group"
                           style={{ top: `${top}px`, height: `${height}px` }}
                         >
-                          <p className="text-xs font-bold text-gold truncate">
-                            {appDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' })}
-                          </p>
-                          <p className="text-sm font-semibold text-foreground truncate">
+                          <div className="flex justify-between items-start">
+                            <p className="text-xs font-bold text-gold truncate flex-1">
+                              {appDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' })}
+                            </p>
+                            
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (app.patient.phone) {
+                                  const formattedDate = appDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                                  const formattedTime = appDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' });
+                                  const msg = encodeURIComponent(`Hola ${app.patient.firstName}, te recordamos tu cita odontológica para el día ${formattedDate} a las ${formattedTime}. ¡Te esperamos!`);
+                                  window.open(`https://wa.me/${app.patient.phone.replace(/\\D/g, '')}?text=${msg}`, '_blank');
+                                } else {
+                                  import('sweetalert2').then(Swal => {
+                                    Swal.default.fire('Sin teléfono', 'Este paciente no tiene un número registrado.', 'warning');
+                                  });
+                                }
+                              }}
+                              className="p-1 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors shadow-sm ml-1 opacity-80 hover:opacity-100"
+                              title="Enviar recordatorio por WhatsApp"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            </button>
+                          </div>
+                          
+                          <p className="text-sm font-semibold text-foreground truncate mt-1">
                             {app.patient.firstName} {app.patient.lastName}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">{app.notes || "Sin notas"}</p>

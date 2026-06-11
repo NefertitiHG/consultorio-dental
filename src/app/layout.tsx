@@ -20,6 +20,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ERP Clínica Dental",
   description: "Sistema de gestión dental premium",
+  manifest: "/manifest.json",
+  themeColor: "#d4af37",
 };
 
 export default function RootLayout({

@@ -28,9 +28,7 @@ export function Navigation() {
     { name: 'Inventario', href: '/inventario', icon: Package },
     { name: 'Tratamientos', href: '/tratamientos', icon: BookOpen },
     { name: 'Finanzas', href: '/finanzas', icon: CircleDollarSign },
-    { name: "Reportes", href: "/reportes", icon: BarChart3 },
     { name: "Buzón", href: "/buzon", icon: Inbox, adminOnly: true },
-    { name: "Ajustes", href: "/ajustes", icon: Settings },
     { name: "Personal", href: "/configuracion/personal", icon: Shield, adminOnly: true },
   ];
 
