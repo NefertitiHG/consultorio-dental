@@ -39,6 +39,20 @@ import { google } from "googleapis";
 
 export async function createAppointment(data: { patientId: string; date: Date; notes?: string, userId: string }) {
   try {
+    // Validar si ya existe una cita a esa misma hora para ese doctor
+    const overlapping = await prisma.appointment.findFirst({
+      where: {
+        userId: data.userId,
+        date: data.date,
+        isActive: true,
+        status: { in: ["SCHEDULED", "COMPLETED"] }
+      }
+    });
+
+    if (overlapping) {
+      return { success: false, error: "Ya existe una cita programada a esa misma hora." };
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         patientId: data.patientId,
@@ -141,6 +155,30 @@ export async function updateAppointment(
   data: { date: Date; notes?: string; status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" }
 ) {
   try {
+    // Necesitamos obtener la cita original para saber qué doctor es
+    const existingAppointment = await prisma.appointment.findUnique({ where: { id } });
+    
+    if (!existingAppointment) {
+      return { success: false, error: "Cita no encontrada." };
+    }
+
+    // Si cambió la fecha o la hora, validamos superposición
+    if (existingAppointment.date.getTime() !== data.date.getTime() && (data.status === "SCHEDULED" || data.status === "COMPLETED")) {
+      const overlapping = await prisma.appointment.findFirst({
+        where: {
+          id: { not: id },
+          userId: existingAppointment.userId,
+          date: data.date,
+          isActive: true,
+          status: { in: ["SCHEDULED", "COMPLETED"] }
+        }
+      });
+
+      if (overlapping) {
+        return { success: false, error: "Ya existe otra cita programada a esa misma hora." };
+      }
+    }
+
     const appointment = await prisma.appointment.update({
       where: { id },
       data: {

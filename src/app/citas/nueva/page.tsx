@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export default async function NuevaCitaPage({ searchParams }: { searchParams: Promise<{ date?: string, time?: string }> }) {
+export default async function NuevaCitaPage({ searchParams }: { searchParams: Promise<{ date?: string, time?: string, error?: string }> }) {
   const session = await getServerSession(authOptions);
 
   const patients = await prisma.patient.findMany({
@@ -19,15 +19,10 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     orderBy: { firstName: "asc" }
   });
 
-  // Solo doctores, superadmins o admins que atiendan (opcional)
-  const doctors = await prisma.user.findMany({
-    where: { role: { in: ["DOCTOR", "SUPERADMIN"] } },
-    orderBy: { name: "asc" }
-  });
-
   const params = await searchParams;
   const defaultDate = params.date || "";
   const defaultTime = params.time || "";
+  const errorMsg = params.error || "";
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -42,7 +37,11 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
     // Añadimos la zona horaria de Perú/Colombia (-05:00) para evitar desfase en Vercel (UTC)
     const date = new Date(`${dateStr}T${timeStr}:00-05:00`);
 
-    await createAppointment({ patientId, date, notes, userId });
+    const result = await createAppointment({ patientId, date, notes, userId });
+    if (!result.success) {
+      redirect(`/citas/nueva?error=${encodeURIComponent(result.error!)}&date=${dateStr}&time=${timeStr}`);
+    }
+    
     redirect("/citas");
   }
 
@@ -57,6 +56,12 @@ export default async function NuevaCitaPage({ searchParams }: { searchParams: Pr
           <p className="text-muted-foreground mt-1">Ingresa los detalles para programar una nueva cita.</p>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+          <span className="font-semibold">Error:</span> {errorMsg}
+        </div>
+      )}
 
       <form action={handleCreate} className="bg-background border border-border p-6 rounded-xl shadow-lg space-y-6">
         
