@@ -43,7 +43,8 @@ export async function resolveSuggestion(id: string, response: string) {
       where: { id },
       data: {
         response,
-        status: "RESOLVED"
+        status: "RESOLVED",
+        isRead: false // Al responder, queda como no leído por el usuario
       }
     });
     
@@ -51,5 +52,29 @@ export async function resolveSuggestion(id: string, response: string) {
     return { success: true, data: suggestion };
   } catch (error) {
     return { success: false, error: "Error al responder la sugerencia." };
+  }
+}
+
+export async function getUserSuggestions(userId: string) {
+  try {
+    const suggestions = await prisma.suggestion.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, data: suggestions };
+  } catch (error) {
+    return { success: false, error: "Error al obtener tus sugerencias." };
+  }
+}
+
+export async function markAsRead(id: string) {
+  try {
+    await prisma.suggestion.update({
+      where: { id },
+      data: { isRead: true }
+    });
+    return { success: true };
+  } catch (error) {
+    return { success: false };
   }
 }

@@ -329,6 +329,7 @@ model Suggestion {
   message   String   @db.Text
   response  String?  @db.Text
   status    String   @default("PENDING") // PENDING, RESOLVED
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
