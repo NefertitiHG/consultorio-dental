@@ -76,9 +76,15 @@ export function BirthdaySurprise() {
 
     // 2. Easter Egg: Día ordinario (17 de Marzo)
     const isMarch17 = month === 2 && day === 17;
+    
     if (isMarch17 && !sessionStorage.getItem("march17SurpriseShown")) {
       sessionStorage.setItem("march17SurpriseShown", "true");
       
+      // Reproducir la misma música
+      const audio = new Audio('/cumpleanos.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(e => console.log("Navegador bloqueó el autoplay", e));
+
       Swal.fire({
         title: 'Recordatorio',
         text: 'Hoy 17 de marzo es un día como cualquier otro en este y en todos los universos posibles. Que tengas un buen día.',
