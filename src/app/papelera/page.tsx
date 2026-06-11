@@ -5,12 +5,14 @@ import { getDeletedPatients, getDeletedAppointments } from "@/features/papelera/
 import { PapeleraList } from "@/features/papelera/components/PapeleraList";
 import { ShieldAlert } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function PapeleraPage() {
   const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role;
 
-  // Solo SUPERADMIN puede acceder a esta ruta
-  if (!session || session.user?.role !== "SUPERADMIN") {
-    redirect("/");
+  if (role !== "SUPERADMIN" && role !== "ADMIN") {
+    redirect("/dashboard");
   }
 
   const [patientsResult, appointmentsResult] = await Promise.all([

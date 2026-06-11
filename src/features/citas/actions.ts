@@ -5,16 +5,21 @@ import { revalidatePath } from "next/cache";
 
 export async function getAppointments(startDate: Date, endDate: Date, userId?: string) {
   try {
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-        isActive: true,
-        patient: { is: { isActive: true } }, // Sintaxis estricta de Prisma para relaciones
-        ...(userId ? { userId } : {}) // Filtrar por doctor si se proporciona el ID
+    const whereClause: any = {
+      date: {
+        gte: startDate,
+        lte: endDate,
       },
+      isActive: true,
+      patient: { is: { isActive: true } },
+    };
+
+    if (userId) {
+      whereClause.userId = userId;
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where: whereClause,
       include: {
         patient: {
           select: { id: true, firstName: true, lastName: true, phone: true },

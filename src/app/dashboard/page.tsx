@@ -88,7 +88,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {isSuperAdmin && metricsResult.success && transactionsResult.success && (
+      {metricsResult.success && transactionsResult.success && (
         <div className="mt-12 border-t border-border pt-8">
           <h2 className="text-2xl font-bold text-foreground mb-6">Resumen Financiero</h2>
           <FinancialDashboard 
