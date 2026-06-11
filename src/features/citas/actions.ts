@@ -39,18 +39,23 @@ import { google } from "googleapis";
 
 export async function createAppointment(data: { patientId: string; date: Date; notes?: string, userId: string }) {
   try {
-    // Validar si ya existe una cita a esa misma hora para ese doctor
+    const thirtyMinutes = 30 * 60 * 1000;
+    
+    // Validar si ya existe una cita en el rango de 30 minutos para ese doctor
     const overlapping = await prisma.appointment.findFirst({
       where: {
         userId: data.userId,
-        date: data.date,
         isActive: true,
-        status: { in: ["SCHEDULED", "COMPLETED"] }
+        status: { in: ["SCHEDULED", "COMPLETED"] },
+        date: {
+          gt: new Date(data.date.getTime() - thirtyMinutes),
+          lt: new Date(data.date.getTime() + thirtyMinutes),
+        }
       }
     });
 
     if (overlapping) {
-      return { success: false, error: "Ya existe una cita programada a esa misma hora." };
+      return { success: false, error: "Ya existe una cita programada en ese bloque de 30 minutos." };
     }
 
     const appointment = await prisma.appointment.create({
@@ -164,18 +169,23 @@ export async function updateAppointment(
 
     // Si cambió la fecha o la hora, validamos superposición
     if (existingAppointment.date.getTime() !== data.date.getTime() && (data.status === "SCHEDULED" || data.status === "COMPLETED")) {
+      const thirtyMinutes = 30 * 60 * 1000;
+      
       const overlapping = await prisma.appointment.findFirst({
         where: {
           id: { not: id },
           userId: existingAppointment.userId,
-          date: data.date,
           isActive: true,
-          status: { in: ["SCHEDULED", "COMPLETED"] }
+          status: { in: ["SCHEDULED", "COMPLETED"] },
+          date: {
+            gt: new Date(data.date.getTime() - thirtyMinutes),
+            lt: new Date(data.date.getTime() + thirtyMinutes),
+          }
         }
       });
 
       if (overlapping) {
-        return { success: false, error: "Ya existe otra cita programada a esa misma hora." };
+        return { success: false, error: "Ya existe otra cita programada en ese bloque de 30 minutos." };
       }
     }
 
