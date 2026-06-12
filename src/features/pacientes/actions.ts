@@ -145,7 +145,7 @@ cloudinary.config({
     const materials = materialsStr ? JSON.parse(materialsStr) : [];
     const file = formData.get("file") as File | null;
 
-    let attachments = [];
+    const attachments: any[] = [];
 
     // Si hay un archivo adjunto, subirlo a Cloudinary
     if (file && file.size > 0) {

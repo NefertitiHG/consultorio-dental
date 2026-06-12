@@ -199,7 +199,6 @@ export function EvolutionList({ patientId, evolutions, userId, inventoryItems = 
                     <div className="mb-4 flex flex-wrap gap-2">
                       {(evo as any).attachments.map((file: any, i: number) => (
                         <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="relative block w-20 h-20 rounded-lg border border-border overflow-hidden hover:opacity-80 transition-opacity">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
                         </a>
                       ))}

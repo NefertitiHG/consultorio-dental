@@ -193,7 +193,7 @@ export function Odontogram({ patientId, initialData, onSave }: any) {
 
       <div className="bg-background border-t border-border p-4 flex justify-between items-center">
         <div className="text-sm text-muted-foreground hidden sm:block">
-          * Doble clic con herramienta activa o herramienta "Borrar/Sano" = Borrar estado
+          * Doble clic con herramienta activa o herramienta &quot;Borrar/Sano&quot; = Borrar estado
         </div>
         <div className="flex gap-4 w-full sm:w-auto justify-end">
           <button 
