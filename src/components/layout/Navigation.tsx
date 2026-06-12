@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Home, Users, CalendarDays, CircleDollarSign, Settings, BookOpen, BarChart3, Shield, LogOut, Package, LayoutDashboard, Inbox } from "lucide-react";
+import { Home, Users, CalendarDays, CircleDollarSign, Settings, BookOpen, BarChart3, Shield, LogOut, Package, LayoutDashboard, Inbox, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function Navigation() {
@@ -20,6 +20,7 @@ export function Navigation() {
   }
 
   const isSuperAdminOrAdmin = isMounted && ((session?.user as any)?.role === "SUPERADMIN" || (session?.user as any)?.role === "ADMIN");
+  const isSuperAdmin = isMounted && (session?.user as any)?.role === "SUPERADMIN";
 
   const allNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -30,9 +31,14 @@ export function Navigation() {
     { name: 'Finanzas', href: '/finanzas', icon: CircleDollarSign },
     { name: "Buzón", href: "/buzon", icon: Inbox, adminOnly: true },
     { name: "Personal", href: "/configuracion/personal", icon: Shield, adminOnly: true },
+    { name: "Accesos", href: "/configuracion/accesos", icon: ShieldAlert, superAdminOnly: true },
   ];
 
-  const navItems = allNavItems.filter(item => !item.adminOnly || isSuperAdminOrAdmin);
+  const navItems = allNavItems.filter(item => {
+    if (item.superAdminOnly) return isSuperAdmin;
+    if (item.adminOnly) return isSuperAdminOrAdmin;
+    return true;
+  });
 
   return (
     <>

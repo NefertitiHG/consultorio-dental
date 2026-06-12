@@ -63,6 +63,18 @@ export const authOptions: NextAuthOptions = {
         });
       }
 
+      // Registrar el evento de inicio de sesión
+      try {
+        await prisma.loginLog.create({
+          data: {
+            userId: existingUser.id,
+            userAgent: "Google Auth Login"
+          }
+        });
+      } catch (err) {
+        console.error("Error logging login event", err);
+      }
+
       return true;
     },
     async jwt({ token, user, account }) {

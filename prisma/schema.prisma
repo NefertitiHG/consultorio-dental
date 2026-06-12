@@ -58,8 +58,20 @@ model User {
   appointments  Appointment[]
   evolutions    ClinicalEvolution[]
   suggestions   Suggestion[]
+  loginLogs     LoginLog[]
 
   @@map("users")
+}
+
+model LoginLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("login_logs")
 }
 
 model VerificationToken {
