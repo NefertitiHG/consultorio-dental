@@ -4,8 +4,6 @@ import { redirect } from "next/navigation";
 import { getLoginLogs } from "@/features/configuracion/actions";
 import { Activity, ArrowLeft, ShieldAlert } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +66,15 @@ export default async function AccesosPage() {
               {logs.map((log) => (
                 <tr key={log.id} className="bg-background border-b border-border hover:bg-secondary/20 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
-                    {format(new Date(log.createdAt), "dd 'de' MMMM, yyyy - HH:mm", { locale: es })}
+                    {new Intl.DateTimeFormat("es-PE", {
+                      timeZone: "America/Lima",
+                      year: "numeric",
+                      month: "long",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false
+                    }).format(new Date(log.createdAt))}
                   </td>
                   <td className="px-6 py-4 font-semibold">
                     {log.user.name} <span className="text-xs font-normal text-muted-foreground ml-1">({log.user.email})</span>
